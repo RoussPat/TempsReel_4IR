@@ -26,6 +26,7 @@
 #define PRIORITY_TRECEIVEFROMMON 25
 #define PRIORITY_TSTARTROBOT 20
 #define PRIORITY_TCAMERA 21
+#define PRIORITY_TBATTERY 10
 
 /*
  * Some remarks:
@@ -123,6 +124,12 @@ void Tasks::Init() {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
+    
+    if (err = rt_task_create(&th_battery, "th_battery", 0, PRIORITY_TBATTERY , 0)) {
+        cerr << "Error task create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    
     cout << "Tasks created successfully" << endl << flush;
 
     /**************************************************************************************/
@@ -168,8 +175,38 @@ void Tasks::Run() {
         exit(EXIT_FAILURE);
     }
 
+    if (err = rt_task_start(&th_battery, (void(*)(void*)) & Tasks::BatteryLevel, this)) {
+        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    
     cout << "Tasks launched" << endl << flush;
 }
+
+/** @brief 
+ * Gestion affichage du niveau de batterie (envoi au moniteur)
+ */
+void Tasks::BatteryLevel(){
+    int err;
+    rt_task_set_periodic(NULL, TM_NOW, 100000000);
+    // Synchronization barrier (waiting that all tasks are starting)
+    rt_sem_p(&sem_barrier, TM_INFINITE);
+    
+    while (1) {
+        Message * mSent = new Message(MESSAGE_ROBOT_BATTERY_GET);
+        Message * mReceived = robot.Write(mSent);
+        //cout << mReceived->ToString() << endl << flush;
+        if (err = mReceived->CompareID(MESSAGE_ANSWER_COM_ERROR)){
+            cerr << "Error BatteryLevel: " << strerror(-err) << endl << flush;
+            throw std::runtime_error{"Error in BatteryLevel"};
+        }
+        monitor.Write(mReceived);
+        delete(mSent);
+        delete(mReceived);
+        rt_task_set_periodic(NULL, TM_NOW, 100000000);        
+    }
+}
+
 
 /**
  * @brief Arrêt des tâches
@@ -364,7 +401,7 @@ void Tasks::MoveTask(void *arg) {
 
     while (1) {
         rt_task_wait_period(NULL);
-        cout << "Periodic movement update";
+        //cout << "Periodic movement update";
         rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
         rs = robotStarted;
         rt_mutex_release(&mutex_robotStarted);
