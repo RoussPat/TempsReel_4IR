@@ -203,15 +203,22 @@ void Tasks::BatteryLevel(){
         if (rs == 1) {
             //Envoi du message
             Message * mSent = new Message(MESSAGE_ROBOT_BATTERY_GET);
-            Message * mReceived = robot.Write(mSent);
-            cout << mReceived->ToString() << endl << flush;
+            Message * mReceived = new Message();
+            mReceived = robot.Write(mSent);
+            
             if (err = mReceived->CompareID(MESSAGE_ANSWER_COM_ERROR)){
                 cerr << "Error BatteryLevel: " << strerror(-err) << endl << flush;
-                throw std::runtime_error{"Error in BatteryLevel"};
+                //throw std::runtime_error{"Error in BatteryLevel"};
             }
+            if (err = mReceived->CompareID(MESSAGE_ANSWER_ROBOT_TIMEOUT)){
+                cerr << "Timeout BatteryLevel: " << strerror(-err) << endl << flush;
+                //throw std::runtime_error{"Error in BatteryLevel"};
+            }
+            cout << "Message reçu : " << mReceived->ToString() << endl << flush;
+            
             monitor.Write(mReceived);
-            delete(mSent);
-            delete(mReceived);
+            //delete(mSent);
+            //delete(mReceived);
         }       
     }
 }
