@@ -63,6 +63,16 @@ public:
      */
     void BatteryLevel();
     
+    /**
+     * @brief Thread starting over server
+     */
+    void RestartServer();    
+    
+    /**
+    * @brief Thread closing camera
+    */
+    void CloseCamera();   
+    
 private:
     /**********************************************************************/
     /* Shared data                                                        */
@@ -76,6 +86,7 @@ private:
     /* Tasks                                                              */
     /**********************************************************************/
     RT_TASK th_server;
+    RT_TASK th_restartServer;
     RT_TASK th_sendToMon;
     RT_TASK th_receiveFromMon;
     RT_TASK th_openComRobot;
@@ -136,8 +147,9 @@ private:
     /**
      * @brief Thread handling control of the robot.
      */
-    void MoveTask(void *arg);
+    void MoveTask(void *arg);    
     
+        
     /**********************************************************************/
     /* Queue services                                                     */
     /**********************************************************************/

@@ -20,6 +20,7 @@
 
 // Déclaration des priorités des taches
 #define PRIORITY_TSERVER 30
+#define PRIORITY_TRESTARTSERVER 31
 #define PRIORITY_TOPENCOMROBOT 20
 #define PRIORITY_TMOVE 20
 #define PRIORITY_TSENDTOMON 22
@@ -104,6 +105,12 @@ void Tasks::Init() {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
+    
+    if (err = rt_task_create(&th_restartServer, "th_restartServer", 0, PRIORITY_TRESTARTSERVER, 0)) {
+        cerr << "Error task create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    
     if (err = rt_task_create(&th_sendToMon, "th_sendToMon", 0, PRIORITY_TSENDTOMON, 0)) {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
@@ -150,6 +157,10 @@ void Tasks::Run() {
     rt_task_set_priority(NULL, T_LOPRIO);
     int err;
 
+    if (err = rt_task_start(&th_server, (void(*)(void*)) & Tasks::ServerTask, this)) {
+        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }    
     if (err = rt_task_start(&th_server, (void(*)(void*)) & Tasks::ServerTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
@@ -238,6 +249,26 @@ void Tasks::Join() {
     cout << "Tasks synchronized" << endl << flush;
     rt_sem_broadcast(&sem_barrier);
     pause();
+}
+
+/**
+ * @brief Thread starting over server when there is an issue.
+ */
+void Tasks::RestartServer() {
+    int err;
+    Message * mReceived = new Message();
+    mReceived = monitor.Read();
+            
+    // Si le message annonce une perte de la communication, on restart le server
+    if (err = mReceived->CompareID(MESSAGE_MONITOR_LOST)){
+        //lancement thread closeCamera
+        CloseCamera;
+        cout << "Camera closed" << endl << flush;
+        //fermeture du moniteur
+        monitor.Close();
+        cout << "Monitor closed" << endl << flush;
+    }
+    cout << "Server restarted" << endl << flush;
 }
 
 /**
