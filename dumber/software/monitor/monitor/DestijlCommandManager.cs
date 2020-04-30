@@ -1,4 +1,4 @@
-﻿//
+//
 //  DestijlCommandManager.cs
 //
 //  Author:

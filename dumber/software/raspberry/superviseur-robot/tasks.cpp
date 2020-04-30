@@ -143,10 +143,10 @@ void Tasks::Init() {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    if (err = rt_task_create(&th_closeComRobot, "th_battery", 0, PRIORITY_TBATTERY , 0)) {
+    /*if (err = rt_task_create(&th_closeComRobot, "th_closeComRobot", 0, PRIORITY_TBATTERY , 0)) {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
-    }
+    }*/
     
     cout << "Tasks created successfully" << endl << flush;
 
@@ -201,10 +201,10 @@ void Tasks::Run() {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::ServerTask, this)) {
+    /*if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::ServerTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
-    }
+    }*/
     
     cout << "Tasks launched" << endl << flush;
 }
@@ -272,35 +272,38 @@ void Tasks::Join() {
 void Tasks::RestartServer() {
     int err;
     // Synchronization barrier (waiting that all tasks are starting)
-    rt_sem_p(&sem_restartServer, TM_INFINITE);
+    rt_sem_p(&sem_barrier, TM_INFINITE);
     
     Message * mReceived = new Message();
     mReceived = monitor.Read();
             
-    //semaphore a mettre
-    
+    while(1){
+        rt_sem_p(&sem_restartServer, TM_INFINITE);
+
     // Si le message annonce une perte de la communication, on restart le server
-    if (err = mReceived->CompareID(MESSAGE_MONITOR_LOST)){
-        //lancement thread closeCamera
-        //CloseCamera();
-        //cout << "Camera closed" << endl << flush;
-        //fermeture du moniteur
-        monitor.Close();
-        cout << "Monitor closed" << endl << flush;
+        if (err = mReceived->CompareID(MESSAGE_MONITOR_LOST)){
+            //lancement thread closeCamera
+            //CloseCamera();
+            //cout << "Camera closed" << endl << flush;
+            //fermeture du moniteur
+            monitor.Close();
+            cout << "Monitor closed" << endl << flush;
+        }
     }
     cout << "Server restarted" << endl << flush;
+
 }
 
 /**
  * @brief Thread closing communication wiht the robot.
  */
-void Tasks::CloseComRobot() {
+/*void Tasks::CloseComRobot() {
     rt_sem_p(&sem_closeComRobot, TM_INFINITE);
     robotOn = false;
     //fermeture de la communication avec le root
     robot.Close();
     cout << "Monitor closed" << endl << flush;
-}
+}*/
 
 /**
  * @brief Thread handling server communication with the monitor.

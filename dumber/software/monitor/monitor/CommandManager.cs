@@ -1,4 +1,4 @@
-﻿//
+//
 //  CommandManager.cs
 //
 //  Author:
