@@ -65,3 +65,6 @@ GUI
 /software/raspberry/superviseur-robot/superviseur/dist/
 /software/raspberry/testeur/testeur/build/
 /software/raspberry/testeur/testeur/dist/
+/dumber/software/simulateur/nbproject/private/private.xml
+/dumber/software/raspberry/superviseur-robot/nbproject/private/private.xml
+

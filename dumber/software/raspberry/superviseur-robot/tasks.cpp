@@ -96,6 +96,7 @@ void Tasks::Init() {
         cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
+
     if (err = rt_sem_create(&sem_startCamera, NULL, 0, S_FIFO)) {
         cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
@@ -104,7 +105,11 @@ void Tasks::Init() {
         cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    if (err = rt_sem_create(&sem_stopCamera, NULL, 0, S_FIFO)) {
+    if (err = rt_sem_create(&sem_restartServer, NULL, 0, S_FIFO)) {
+        cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_sem_create(&sem_closeComRobot, NULL, 0, S_FIFO)) {
         cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -142,9 +147,12 @@ void Tasks::Init() {
     if (err = rt_task_create(&th_move, "th_move", 0, PRIORITY_TMOVE, 0)) {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
-    }
-    
+    }    
     if (err = rt_task_create(&th_battery, "th_battery", 0, PRIORITY_TBATTERY , 0)) {
+        cerr << "Error task create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_create(&th_closeComRobot, "th_battery", 0, PRIORITY_TBATTERY , 0)) {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -214,6 +222,11 @@ void Tasks::Run() {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
+    if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::ServerTask, this)) {
+        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    
     cout << "Tasks launched" << endl << flush;
 }
 /** @brief
@@ -308,19 +321,35 @@ void Tasks::Join() {
  */
 void Tasks::RestartServer() {
     int err;
+    // Synchronization barrier (waiting that all tasks are starting)
+    rt_sem_p(&sem_restartServer, TM_INFINITE);
+    
     Message * mReceived = new Message();
     mReceived = monitor.Read();
             
+    //semaphore a mettre
+    
     // Si le message annonce une perte de la communication, on restart le server
     if (err = mReceived->CompareID(MESSAGE_MONITOR_LOST)){
         //lancement thread closeCamera
-        CloseCamera();
-        cout << "Camera closed" << endl << flush;
+        //CloseCamera();
+        //cout << "Camera closed" << endl << flush;
         //fermeture du moniteur
         monitor.Close();
         cout << "Monitor closed" << endl << flush;
     }
     cout << "Server restarted" << endl << flush;
+}
+
+/**
+ * @brief Thread closing communication wiht the robot.
+ */
+void Tasks::CloseComRobot() {
+    rt_sem_p(&sem_closeComRobot, TM_INFINITE);
+    robotOn = false;
+    //fermeture de la communication avec le root
+    robot.Close();
+    cout << "Monitor closed" << endl << flush;
 }
 
 /**
