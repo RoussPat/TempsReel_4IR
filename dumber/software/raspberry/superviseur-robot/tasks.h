@@ -59,11 +59,6 @@ public:
     void Join();
     
     /**
-     * @brief Checks the battery level
-     */
-    void BatteryLevel();
-    
-    /**
      * @brief Thread starting over server
      */
     void RestartServer();    
@@ -86,7 +81,11 @@ private:
     ComRobot robot;
     int robotStarted = 0;
     int move = MESSAGE_ROBOT_STOP;
+    int WD =0;
+    int position=0;
+    int arenaOK=-1;
     bool robotOn;
+
     
     /**********************************************************************/
     /* Tasks                                                              */
@@ -121,6 +120,9 @@ private:
     RT_SEM sem_openComRobot;
     RT_SEM sem_serverOk;
     RT_SEM sem_startRobot;
+    RT_SEM sem_startCamera;
+    RT_SEM sem_searchArena;
+    RT_SEM sem_stopCamera;
     RT_SEM sem_restartServer;
     RT_SEM sem_closeComRobot;
 
@@ -164,7 +166,26 @@ private:
     void MoveTask(void *arg);  
     
     
-        
+    /**
+     * @brief Checks the battery level
+     */
+    void BatteryLevelTask();
+    
+    /**
+     * @brief TODO
+     */
+    void StartCameraTask();
+    
+    /**
+     * @brief TODO
+     */
+    void Tasks::SearchArenaTask() ;
+    
+    /**
+     * @brief TODO
+     */
+    void Tasks::StopCameraTask() ;
+       
     /**********************************************************************/
     /* Queue services                                                     */
     /**********************************************************************/
