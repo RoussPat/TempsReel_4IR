@@ -262,7 +262,7 @@ void Tasks::RestartServer() {
     // Si le message annonce une perte de la communication, on restart le server
     if (err = mReceived->CompareID(MESSAGE_MONITOR_LOST)){
         //lancement thread closeCamera
-        CloseCamera;
+        CloseCamera();
         cout << "Camera closed" << endl << flush;
         //fermeture du moniteur
         monitor.Close();

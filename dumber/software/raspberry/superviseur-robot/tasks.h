@@ -90,9 +90,15 @@ private:
     RT_TASK th_sendToMon;
     RT_TASK th_receiveFromMon;
     RT_TASK th_openComRobot;
+    RT_TASK th_closeComRobot;
     RT_TASK th_startRobot;
     RT_TASK th_move;
     RT_TASK th_battery;
+    RT_TASK th_startCamera; //optionnel
+    RT_TASK th_stopCamera; //optionnel
+    RT_TASK th_watchdog; 
+    RT_TASK th_getImage; //optionnel
+    RT_TASK th_searchArena; //optionnel
     
     /**********************************************************************/
     /* Mutex                                                              */
