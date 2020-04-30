@@ -457,6 +457,10 @@ void Tasks::ReceiveFromMonTask(void *arg) {
             // oublie l'arene infirmée
         }else if(msgRcv->CompareID(MESSAGE_CAMERA_POSITION_CLOSE)){
             rt_sem_v(&sem_stopCamera);
+        }else if(msgRcv->CompareID(MESSAGE_CAM_POSITION_COMPUTE_START)){
+            position=1;
+        }else if(msgRcv->CompareID(MESSAGE_CAM_POSITION_COMPUTE_STOP)){
+            position=0;
         }
         
         delete(msgRcv); // mus be deleted manually, no consumer

@@ -82,6 +82,7 @@ private:
     int robotStarted = 0;
     int move = MESSAGE_ROBOT_STOP;
     int WD =0;
+    int position=0;
     int arenaOK=-1;
     bool robotOn;
 
