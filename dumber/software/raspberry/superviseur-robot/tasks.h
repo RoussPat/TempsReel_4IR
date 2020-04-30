@@ -179,12 +179,12 @@ private:
     /**
      * @brief TODO
      */
-    void Tasks::SearchArenaTask() ;
+    void SearchArenaTask() ;
     
     /**
      * @brief TODO
      */
-    void Tasks::StopCameraTask() ;
+    void StopCameraTask() ;
        
     /**********************************************************************/
     /* Queue services                                                     */
