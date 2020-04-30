@@ -73,6 +73,11 @@ public:
     */
     void CloseCamera();   
     
+    /**
+    * @brief Thread closing communication wiht the robot.
+    */
+    void CloseComRobot();
+    
 private:
     /**********************************************************************/
     /* Shared data                                                        */
@@ -81,6 +86,7 @@ private:
     ComRobot robot;
     int robotStarted = 0;
     int move = MESSAGE_ROBOT_STOP;
+    bool robotOn;
     
     /**********************************************************************/
     /* Tasks                                                              */
@@ -115,6 +121,8 @@ private:
     RT_SEM sem_openComRobot;
     RT_SEM sem_serverOk;
     RT_SEM sem_startRobot;
+    RT_SEM sem_restartServer;
+    RT_SEM sem_closeComRobot;
 
     /**********************************************************************/
     /* Message queues                                                     */
@@ -153,7 +161,8 @@ private:
     /**
      * @brief Thread handling control of the robot.
      */
-    void MoveTask(void *arg);    
+    void MoveTask(void *arg);  
+    
     
         
     /**********************************************************************/
