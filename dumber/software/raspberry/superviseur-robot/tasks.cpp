@@ -96,6 +96,18 @@ void Tasks::Init() {
         cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
+    if (err = rt_sem_create(&sem_startCamera, NULL, 0, S_FIFO)) {
+        cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_sem_create(&sem_searchArena, NULL, 0, S_FIFO)) {
+        cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_sem_create(&sem_stopCamera, NULL, 0, S_FIFO)) {
+        cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
     cout << "Semaphores created successfully" << endl << flush;
 
     /**************************************************************************************/
@@ -186,18 +198,59 @@ void Tasks::Run() {
         exit(EXIT_FAILURE);
     }
 
-    if (err = rt_task_start(&th_battery, (void(*)(void*)) & Tasks::BatteryLevel, this)) {
+    if (err = rt_task_start(&th_battery, (void(*)(void*)) & Tasks::BatteryLevelTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    
+    if (err = rt_task_start(&th_startCamera, (void(*)(void*)) & Tasks::StartCameraTask, this)) {
+        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_start(&th_searchArena, (void(*)(void*)) & Tasks::SearchArenaTask, this)) {
+        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_start(&th_stopCamera, (void(*)(void*)) & Tasks::StopCameraTask, this)) {
+        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
     cout << "Tasks launched" << endl << flush;
 }
+/** @brief
+ * TODO
+ */
+void Tasks::StopCameraTask(){
+    // Synchronization barrier (waiting that all tasks are starting)
+    rt_sem_p(&sem_barrier,TM_INFINITE);
+    // lunch only when needed in receiveFromMon
+    rt_sem_p(&sem_stopCamera,TM_INFINITE);
+    //TODO MESSAGE_CAM_IMAGE
+}
+/** @brief
+ * TODO
+ */
+void Tasks::SearchArenaTask(){
+    // Synchronization barrier (waiting that all tasks are starting)
+    rt_sem_p(&sem_barrier,TM_INFINITE);
+    // lunch only when needed in receiveFromMon
+    rt_sem_p(&sem_searchArena,TM_INFINITE);
+    //TODO MESSAGE_CAM_IMAGE
+}
 
+/** @brief
+ * TODO
+ */
+void Tasks::StartCameraTask(){
+    // Synchronization barrier (waiting that all tasks are starting)
+    rt_sem_p(&sem_barrier,TM_INFINITE);
+    // lunch only when needed in receiveFromMon
+    rt_sem_p(&sem_startCamera,TM_INFINITE);
+    //TODO
+}
 /** @brief 
  * Gestion affichage du niveau de batterie (envoi au moniteur)
  */
-void Tasks::BatteryLevel(){
+void Tasks::BatteryLevelTask(){
     int err, rs; 
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
@@ -233,7 +286,6 @@ void Tasks::BatteryLevel(){
         }       
     }
 }
-
 
 /**
  * @brief Arrêt des tâches
@@ -328,7 +380,7 @@ void Tasks::SendToMonTask(void* arg) {
  */
 void Tasks::ReceiveFromMonTask(void *arg) {
     Message *msgRcv;
-    
+    Message *toSend;
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
@@ -345,10 +397,15 @@ void Tasks::ReceiveFromMonTask(void *arg) {
 
         if (msgRcv->CompareID(MESSAGE_MONITOR_LOST)) {
             delete(msgRcv);
+            RestartServer();
             exit(-1);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_COM_OPEN)) {
             rt_sem_v(&sem_openComRobot);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_START_WITHOUT_WD)) {
+            WD =0;
+            rt_sem_v(&sem_startRobot);
+        } else if(msgRcv->CompareID(MESSAGE_ROBOT_START_WITH_WD)){
+            WD =1;
             rt_sem_v(&sem_startRobot);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_GO_FORWARD) ||
                 msgRcv->CompareID(MESSAGE_ROBOT_GO_BACKWARD) ||
@@ -359,7 +416,20 @@ void Tasks::ReceiveFromMonTask(void *arg) {
             rt_mutex_acquire(&mutex_move, TM_INFINITE);
             move = msgRcv->GetID();
             rt_mutex_release(&mutex_move);
+        } else if(msgRcv->CompareID(MESSAGE_CAMERA_OPEN)){
+            rt_sem_v(&sem_startCamera);
+        } else if(msgRcv->CompareID(MESSAGE_CAMERA_ARENA_ASK)){
+            rt_sem_v(&sem_searchArena);
+        }else if(msgRcv->CompareID(MESSAGE_CAMERA_ARENA_CONFIRM)){
+            arenaOK=1;
+            //lance la sauvegarde de l'arene confirmée
+        }else if(msgRcv->CompareID(MESSAGE_CAMERA_ARENA_INFIRM)){
+            arenaOK=0;
+            // oublie l'arene infirmée
+        }else if(msgRcv->CompareID(MESSAGE_CAMERA_POSITION_CLOSE)){
+            rt_sem_v(&sem_stopCamera);
         }
+        
         delete(msgRcv); // mus be deleted manually, no consumer
     }
 }
