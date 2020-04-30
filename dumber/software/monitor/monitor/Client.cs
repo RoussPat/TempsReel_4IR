@@ -1,4 +1,4 @@
-//
+﻿//
 //  Client.cs
 //
 //  Author:
@@ -35,7 +35,7 @@ namespace monitor
         /// <summary>
         /// Default server name
         /// </summary>
-        public const string defaultIP = "localhost";
+        public const string defaultIP = "10.105.1.13";
 
         /// <summary>
         /// Default server port number
