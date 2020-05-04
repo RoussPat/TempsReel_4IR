@@ -353,7 +353,8 @@ void Tasks::RestartServer() {
  */
 void Tasks::CloseComRobot() {
     // Synchronization barrier (waiting that all tasks are starting)
-    rt_sem_p(&sem_barrier, TM_INFINITE);    
+    rt_sem_p(&sem_barrier, TM_INFINITE);  
+    Message * toSend = new Message(MESSAGE_ROBOT_COM_CLOSE);
             
     while(1){
         rt_sem_p(&sem_closeComRobot, TM_INFINITE);
@@ -361,7 +362,10 @@ void Tasks::CloseComRobot() {
         rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
         robotStarted = 0;
         rt_mutex_release(&mutex_robotStarted);
+        //Envoi d'un message au moniteur
+        SendToMonTask(toSend); //???
         robot.Close();
+        //????close_communication_robot;
     }
     cout << "ComRobot closed" << endl << flush;
 }
@@ -459,17 +463,17 @@ void Tasks::ReceiveFromMonTask(void *arg) {
             rt_mutex_acquire(&mutex_move, TM_INFINITE);
             move = msgRcv->GetID();
             rt_mutex_release(&mutex_move);
-        } else if(msgRcv->CompareID(MESSAGE_CAMERA_OPEN)){
+        } else if(msgRcv->CompareID(MESSAGE_CAM_OPEN)){
             rt_sem_v(&sem_startCamera);
-        } else if(msgRcv->CompareID(MESSAGE_CAMERA_ARENA_ASK)){
+        } else if(msgRcv->CompareID(MESSAGE_CAM_ASK_ARENA)){
             rt_sem_v(&sem_searchArena);
-        }else if(msgRcv->CompareID(MESSAGE_CAMERA_ARENA_CONFIRM)){
+        }else if(msgRcv->CompareID(MESSAGE_CAM_ARENA_CONFIRM)){
             arenaOK=1;
             //lance la sauvegarde de l'arene confirmée
-        }else if(msgRcv->CompareID(MESSAGE_CAMERA_ARENA_INFIRM)){
+        }else if(msgRcv->CompareID(MESSAGE_CAM_ARENA_INFIRM)){
             arenaOK=0;
             // oublie l'arene infirmée
-        }else if(msgRcv->CompareID(MESSAGE_CAMERA_POSITION_CLOSE)){
+        }else if(msgRcv->CompareID(MESSAGE_CAM_POSITION_COMPUTE_STOP)){
             rt_sem_v(&sem_stopCamera);
         }else if(msgRcv->CompareID(MESSAGE_CAM_POSITION_COMPUTE_START)){
             position=1;
