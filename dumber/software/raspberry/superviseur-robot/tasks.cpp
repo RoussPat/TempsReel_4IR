@@ -29,7 +29,7 @@
 #define PRIORITY_TSTARTROBOT 20
 #define PRIORITY_TCAMERA 21
 #define PRIORITY_TBATTERY 10
-#define PRIORITY_WATCHDOG 32
+#define PRIORITY_WATCHDOG 27
 
 /*
  * Some remarks:
@@ -358,6 +358,7 @@ void Tasks::RestartServerTask() {
         BatteryLevelTask.Stop();
         StopCameraTask.Join();
         CloseComRobotTask.join();
+        
         cout << "Monitor closed" << endl << flush;
         cout << "Server restarts" << endl << flush;
             rt_task_set_priority(NULL, T_LOPRIO);
@@ -420,7 +421,6 @@ void Tasks::RestartServerTask() {
     }
 }
         
-
 
 /**
  * @brief Thread closing communication wiht the robot.
@@ -668,7 +668,7 @@ void Tasks::MoveTask(void *arg) {
 }
 
 
-void Task::WatchDog(){
+void Tasks::WatchDog(){
     
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
