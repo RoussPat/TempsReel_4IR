@@ -177,10 +177,6 @@ private:
     
     void WatchDog();
     
-    /**
-     * @brief TODO
-     */
-    void StopCameraTask() ;     
     
     /**
      * @brief Thread starting over server

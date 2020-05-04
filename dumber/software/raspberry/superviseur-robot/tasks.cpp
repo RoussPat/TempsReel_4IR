@@ -115,7 +115,7 @@ void Tasks::Init() {
         cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    if (err = rt_sem_create(&sem_WD, NULL, 0, S_FIFO)) {
+    if (err = rt_sem_create(&sem_watchdog, NULL, 0, S_FIFO)) {
         cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -235,7 +235,7 @@ void Tasks::Run() {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }    */
-    if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobot, this)) {
+    if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobotTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -351,13 +351,18 @@ void Tasks::RestartServerTask() {
         rt_mutex_acquire(&mutex_monitor, TM_INFINITE);
         monitor.Close();
         rt_mutex_release(&mutex_monitor);
-        SendToMonTask.Stop();
-        ReceiveFromMonTask.Stop();
-        MoveTask.Stop();
-        WatchDog.Stop();
-        BatteryLevelTask.Stop();
-        rt_tasks_join(&th_closeComRobot);
-        rt_tasks_join(&th_stopCamera);
+        rt_task_delete(&th_sendToMon);
+        //SendToMonTask.Stop();
+        rt_task_delete(&th_receiveFromMon);
+        //ReceiveFromMonTask.Stop();
+        rt_task_delete(&th_move);
+        //MoveTask.Stop();
+        rt_task_delete(&th_watchdog);
+        //WatchDog.Stop();
+        rt_task_delete(&th_battery);
+        //BatteryLevelTask.Stop();
+        rt_task_join(&th_closeComRobot);
+        rt_task_join(&th_stopCamera);
         
         cout << "Monitor closed" << endl << flush;
         cout << "Server restarts" << endl << flush;
@@ -408,7 +413,7 @@ void Tasks::RestartServerTask() {
             cerr << "Error task start: " << strerror(-err) << endl << flush;
             exit(EXIT_FAILURE);
         }    */
-        if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobot, this)) {
+        if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobotTask, this)) {
             cerr << "Error task start: " << strerror(-err) << endl << flush;
             exit(EXIT_FAILURE);
         }
@@ -437,7 +442,7 @@ void Tasks::CloseComRobotTask() {
     rt_mutex_release(&mutex_robotStarted);
     //Envoi d'un message au moniteur
     rt_mutex_acquire(&mutex_robot, TM_INFINITE); //mutex du robot?
-    SendToMonTask(toSend); //???
+    WriteInQueue(&q_messageToMon, toSend); // msgSend will be deleted by sendToMon
     robot.Close();
     rt_mutex_release(&mutex_robot);
 
@@ -682,15 +687,15 @@ void Tasks::WatchDog(){
     if(WD==1){
         rt_task_set_periodic(NULL, TM_NOW, 200000000);
         while(1){
-            mod=(mod+1)%%5;
+            mod=(mod+1)%5;
             Message * msgSend;
             rt_task_wait_period(NULL);
             msgSend = robot.Write(robot.Ping());
-            if(msgSend.CompareID(MESSAGE_ANSWER_COM_ERROR)|| msgSend.CompareID(MESSAGE_ANSWER_ROBOT_TIMEOUT)){
-                err=(err+1)%%4;
+            if(msgSend->CompareID(MESSAGE_ANSWER_COM_ERROR)|| msgSend->CompareID(MESSAGE_ANSWER_ROBOT_TIMEOUT)){
+                err=(err+1)%4;
             }
             else{
-                err=(err-1)%%4;
+                err=(err-1)%4;
             }
             if(err==3){
                 rt_sem_v(&sem_restartServer);
