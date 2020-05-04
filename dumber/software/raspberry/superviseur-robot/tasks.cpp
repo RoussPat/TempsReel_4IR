@@ -24,7 +24,7 @@
 #define PRIORITY_TCLOSECOMROBOT 29
 #define PRIORITY_TOPENCOMROBOT 20
 #define PRIORITY_TMOVE 20
-#define PRIORITY_TSENDTOMON 22
+#define PRIORITY_TSENDTOMON 28
 #define PRIORITY_TRECEIVEFROMMON 25
 #define PRIORITY_TSTARTROBOT 20
 #define PRIORITY_TCAMERA 21
@@ -190,11 +190,11 @@ void Tasks::Run() {
     if (err = rt_task_start(&th_server, (void(*)(void*)) & Tasks::ServerTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
-    }    
-    if (err = rt_task_start(&th_server, (void(*)(void*)) & Tasks::ServerTask, this)) {
+    }  /*  
+    if (err = rt_task_start(&th_restartServer, (void(*)(void*)) & Tasks::RestartServerTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
-    }
+    }*/
     if (err = rt_task_start(&th_sendToMon, (void(*)(void*)) & Tasks::SendToMonTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
@@ -204,6 +204,10 @@ void Tasks::Run() {
         exit(EXIT_FAILURE);
     }
     if (err = rt_task_start(&th_openComRobot, (void(*)(void*)) & Tasks::OpenComRobot, this)) {
+        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobotTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -218,7 +222,7 @@ void Tasks::Run() {
     if (err = rt_task_start(&th_battery, (void(*)(void*)) & Tasks::BatteryLevelTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
-    }
+    }/*
     if (err = rt_task_start(&th_startCamera, (void(*)(void*)) & Tasks::StartCameraTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
@@ -230,6 +234,7 @@ void Tasks::Run() {
     if (err = rt_task_start(&th_stopCamera, (void(*)(void*)) & Tasks::StopCameraTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
+<<<<<<< HEAD
     }    
     if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobot, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
@@ -240,6 +245,9 @@ void Tasks::Run() {
         exit(EXIT_FAILURE);
     }
     
+=======
+    } */
+>>>>>>> 0d27c75b4d0bc68e8627f7a1f61936fca04afc1c
     cout << "Tasks launched" << endl << flush;
 }
 /** @brief
@@ -332,7 +340,7 @@ void Tasks::Join() {
 /**
  * @brief Thread starting over server when there is an issue.
  */
-void Tasks::RestartServer() {
+void Tasks::RestartServerTask() {
     int err;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);    
@@ -360,7 +368,7 @@ void Tasks::RestartServer() {
 /**
  * @brief Thread closing communication wiht the robot.
  */
-void Tasks::CloseComRobot() {
+void Tasks::CloseComRobotTask() {
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);  
     Message * toSend = new Message(MESSAGE_ROBOT_COM_CLOSE);
@@ -372,8 +380,11 @@ void Tasks::CloseComRobot() {
         robotStarted = 0;
         rt_mutex_release(&mutex_robotStarted);
         //Envoi d'un message au moniteur
+        rt_mutex_acquire(&mutex_robot, TM_INFINITE); //mutex du robot?
         SendToMonTask(toSend); //???
         robot.Close();
+        rt_mutex_release(&mutex_robot);
+        
         //????close_communication_robot;
     }
     cout << "ComRobot closed" << endl << flush;
@@ -453,7 +464,7 @@ void Tasks::ReceiveFromMonTask(void *arg) {
 
         if (msgRcv->CompareID(MESSAGE_MONITOR_LOST)) {
             delete(msgRcv);
-            RestartServer();
+            RestartServerTask();
             exit(-1);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_COM_OPEN)) {
             rt_sem_v(&sem_openComRobot);
