@@ -21,6 +21,7 @@
 // Déclaration des priorités des taches
 #define PRIORITY_TSERVER 30
 #define PRIORITY_TRESTARTSERVER 31
+#define PRIORITY_TCLOSECOMROBOT 29
 #define PRIORITY_TOPENCOMROBOT 20
 #define PRIORITY_TMOVE 20
 #define PRIORITY_TSENDTOMON 22
@@ -148,11 +149,11 @@ void Tasks::Init() {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }    
-    if (err = rt_task_create(&th_battery, "th_battery", 0, PRIORITY_TBATTERY , 0)) {
+    if (err = rt_task_create(&th_battery, "th_battery", 0, PRIORITY_TBATTERY, 0)) {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    if (err = rt_task_create(&th_closeComRobot, "th_battery", 0, PRIORITY_TBATTERY , 0)) {
+    if (err = rt_task_create(&th_closeComRobot, "th_closeComRobot", 0, PRIORITY_TCLOSECOMROBOT, 0)) {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -205,7 +206,6 @@ void Tasks::Run() {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-
     if (err = rt_task_start(&th_battery, (void(*)(void*)) & Tasks::BatteryLevelTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
@@ -221,8 +221,8 @@ void Tasks::Run() {
     if (err = rt_task_start(&th_stopCamera, (void(*)(void*)) & Tasks::StopCameraTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
-    }
-    if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::ServerTask, this)) {
+    }    
+    if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobot, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -273,7 +273,7 @@ void Tasks::BatteryLevelTask(){
         
         //Attente du lancement de la Comm avec le robot
         rt_task_wait_period(NULL);
-        cout << "Periodic battery update" << endl << flush;
+        //cout << "Periodic battery update" << endl << flush;
         rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
         rs = robotStarted;
         rt_mutex_release(&mutex_robotStarted);
@@ -322,34 +322,48 @@ void Tasks::Join() {
 void Tasks::RestartServer() {
     int err;
     // Synchronization barrier (waiting that all tasks are starting)
-    rt_sem_p(&sem_restartServer, TM_INFINITE);
-    
+    rt_sem_p(&sem_barrier, TM_INFINITE);    
     Message * mReceived = new Message();
     mReceived = monitor.Read();
-            
-    //semaphore a mettre
-    
-    // Si le message annonce une perte de la communication, on restart le server
-    if (err = mReceived->CompareID(MESSAGE_MONITOR_LOST)){
-        //lancement thread closeCamera
-        //CloseCamera();
-        //cout << "Camera closed" << endl << flush;
-        //fermeture du moniteur
-        monitor.Close();
-        cout << "Monitor closed" << endl << flush;
+     
+    while(1){
+        rt_sem_p(&sem_restartServer, TM_INFINITE);
+        // Si le message annonce une perte de la communication, on restart le server
+        if (err = mReceived->CompareID(MESSAGE_MONITOR_LOST)){
+            //Arret de la camera
+            rt_sem_v(&sem_stopCamera);
+            //Fermeture de la communication avec le robot
+            rt_sem_v(&sem_closeComRobot);
+            //Fermeture du moniteur
+            rt_mutex_acquire(&mutex_monitor, TM_INFINITE);
+            monitor.Close();
+            rt_mutex_release(&mutex_monitor);
+            cout << "Monitor closed" << endl << flush;
+            cout << "Server restarted" << endl << flush;
+        }
     }
-    cout << "Server restarted" << endl << flush;
 }
 
 /**
  * @brief Thread closing communication wiht the robot.
  */
 void Tasks::CloseComRobot() {
-    rt_sem_p(&sem_closeComRobot, TM_INFINITE);
-    robotOn = false;
-    //fermeture de la communication avec le root
-    robot.Close();
-    cout << "Monitor closed" << endl << flush;
+    // Synchronization barrier (waiting that all tasks are starting)
+    rt_sem_p(&sem_barrier, TM_INFINITE);  
+    Message * toSend = new Message(MESSAGE_ROBOT_COM_CLOSE);
+            
+    while(1){
+        rt_sem_p(&sem_closeComRobot, TM_INFINITE);
+        //Arret du robot
+        rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
+        robotStarted = 0;
+        rt_mutex_release(&mutex_robotStarted);
+        //Envoi d'un message au moniteur
+        SendToMonTask(toSend); //???
+        robot.Close();
+        //????close_communication_robot;
+    }
+    cout << "ComRobot closed" << endl << flush;
 }
 
 /**
@@ -445,17 +459,17 @@ void Tasks::ReceiveFromMonTask(void *arg) {
             rt_mutex_acquire(&mutex_move, TM_INFINITE);
             move = msgRcv->GetID();
             rt_mutex_release(&mutex_move);
-        } else if(msgRcv->CompareID(MESSAGE_CAMERA_OPEN)){
+        } else if(msgRcv->CompareID(MESSAGE_CAM_OPEN)){
             rt_sem_v(&sem_startCamera);
-        } else if(msgRcv->CompareID(MESSAGE_CAMERA_ARENA_ASK)){
+        } else if(msgRcv->CompareID(MESSAGE_CAM_ASK_ARENA)){
             rt_sem_v(&sem_searchArena);
-        }else if(msgRcv->CompareID(MESSAGE_CAMERA_ARENA_CONFIRM)){
+        }else if(msgRcv->CompareID(MESSAGE_CAM_ARENA_CONFIRM)){
             arenaOK=1;
             //lance la sauvegarde de l'arene confirmée
-        }else if(msgRcv->CompareID(MESSAGE_CAMERA_ARENA_INFIRM)){
+        }else if(msgRcv->CompareID(MESSAGE_CAM_ARENA_INFIRM)){
             arenaOK=0;
             // oublie l'arene infirmée
-        }else if(msgRcv->CompareID(MESSAGE_CAMERA_POSITION_CLOSE)){
+        }else if(msgRcv->CompareID(MESSAGE_CAM_POSITION_COMPUTE_STOP)){
             rt_sem_v(&sem_stopCamera);
         }else if(msgRcv->CompareID(MESSAGE_CAM_POSITION_COMPUTE_START)){
             position=1;

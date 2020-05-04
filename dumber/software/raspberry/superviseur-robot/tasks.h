@@ -84,8 +84,6 @@ private:
     int WD =0;
     int position=0;
     int arenaOK=-1;
-    bool robotOn;
-
     
     /**********************************************************************/
     /* Tasks                                                              */
@@ -180,12 +178,14 @@ private:
      * @brief TODO
      */
     void SearchArenaTask();
+
     
     /**
      * @brief TODO
      */
-    void StopCameraTask();
-       
+
+    void StopCameraTask() ;
+
     /**********************************************************************/
     /* Queue services                                                     */
     /**********************************************************************/

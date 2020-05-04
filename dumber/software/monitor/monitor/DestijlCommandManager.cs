@@ -111,8 +111,7 @@ namespace monitor
             InvalidAnswer,
             Busy,
             CommunicationLostWithRobot,
-            CommunicationLostWithServer,
-            CommunicationError
+            CommunicationLostWithServer
         }
 
         public struct Point {
@@ -260,8 +259,6 @@ namespace monitor
                     if (answer.ToUpper().Contains(DestijlCommandList.ANSWER_NACK)) status = CommandStatus.Rejected;
                     // if communication is lost with robot, return CommunicationLostWithRobot
                     else if (answer.ToUpper().Contains(DestijlCommandList.ANSWER_TIMEOUT)) status = CommandStatus.CommunicationLostWithRobot;
-
-                    else if (answer.ToUpper().Contains(DestijlCommandList.ANSWER_COM_ERROR)) status = CommandStatus.CommunicationError;
                     // if answer is empty, communication with robot is lost
                     else if (answer.Length == 0) status = CommandStatus.CommunicationLostWithServer;
                     //else status = CommandStatus.InvalidAnswer;
