@@ -56,7 +56,7 @@ public:
     /**
      * @brief Suspends main thread
      */
-    void Join();
+    void BR();
     
 private:
     /**********************************************************************/
@@ -66,7 +66,7 @@ private:
     ComRobot robot;
     int robotStarted = 0;
     int move = MESSAGE_ROBOT_STOP;
-    int WD =0;
+    int WD =-1;
     int position=0;
     int arenaOK=-1;
 

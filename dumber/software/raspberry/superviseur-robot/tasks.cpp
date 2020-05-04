@@ -327,7 +327,7 @@ void Tasks::Stop() {
 
 /**
  */
-void Tasks::Join() {
+void Tasks::BR() {
     cout << "Tasks synchronized" << endl << flush;
     rt_sem_broadcast(&sem_barrier);
     pause();
@@ -356,8 +356,8 @@ void Tasks::RestartServerTask() {
         MoveTask.Stop();
         WatchDog.Stop();
         BatteryLevelTask.Stop();
-        StopCameraTask.Join();
-        CloseComRobotTask.join();
+        rt_tasks_join(&th_closeComRobot);
+        rt_tasks_join(&th_stopCamera);
         
         cout << "Monitor closed" << endl << flush;
         cout << "Server restarts" << endl << flush;
