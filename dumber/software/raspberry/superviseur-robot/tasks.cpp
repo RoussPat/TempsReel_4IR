@@ -210,10 +210,6 @@ void Tasks::Run() {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    if (err = rt_task_start(&th_openComRobot, (void(*)(void*)) & Tasks::CloseComRobot, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
-        exit(EXIT_FAILURE);
-    }
     if (err = rt_task_start(&th_startCamera, (void(*)(void*)) & Tasks::StartCameraTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
@@ -225,8 +221,8 @@ void Tasks::Run() {
     if (err = rt_task_start(&th_stopCamera, (void(*)(void*)) & Tasks::StopCameraTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
-    }
-    if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::ServerTask, this)) {
+    }    
+    if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobot, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
