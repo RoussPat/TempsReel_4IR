@@ -29,6 +29,7 @@
 #define PRIORITY_TSTARTROBOT 20
 #define PRIORITY_TCAMERA 21
 #define PRIORITY_TBATTERY 10
+#define PRIORITY_WATCHDOG 32
 
 /*
  * Some remarks:
@@ -114,6 +115,10 @@ void Tasks::Init() {
         cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
+    if (err = rt_sem_create(&sem_WD, NULL, 0, S_FIFO)) {
+        cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
     cout << "Semaphores created successfully" << endl << flush;
 
     /**************************************************************************************/
@@ -154,6 +159,10 @@ void Tasks::Init() {
         exit(EXIT_FAILURE);
     }
     if (err = rt_task_create(&th_closeComRobot, "th_closeComRobot", 0, PRIORITY_TCLOSECOMROBOT, 0)) {
+        cerr << "Error task create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_create(&th_watchdog, "th_closeComRobot", 0, PRIORITY_WATCHDOG, 0)) {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -223,6 +232,10 @@ void Tasks::Run() {
         exit(EXIT_FAILURE);
     }    
     if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobot, this)) {
+        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_start(&th_watchdog, (void(*)(void*)) & Tasks::WatchDog, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -486,7 +499,6 @@ void Tasks::ReceiveFromMonTask(void *arg) {
  */
 void Tasks::OpenComRobot(void *arg) {
     int status;
-    int err;
 
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
@@ -526,13 +538,19 @@ void Tasks::StartRobotTask(void *arg) {
     /* The task startRobot starts here                                                    */
     /**************************************************************************************/
     while (1) {
-
         Message * msgSend;
         rt_sem_p(&sem_startRobot, TM_INFINITE);
         cout << "Start robot without watchdog (";
         rt_mutex_acquire(&mutex_robot, TM_INFINITE);
-        msgSend = robot.Write(robot.StartWithoutWD());
-        rt_mutex_release(&mutex_robot);
+        if(WD=1){
+            msgSend = robot.Write(robot.StartWithWD());
+            rt_mutex_release(&mutex_robot);
+            rt_sem_v(&sem_watchdog);
+        }
+        else{
+            msgSend = robot.Write(robot.StartWithoutWD());
+            rt_mutex_release(&mutex_robot);
+        }
         cout << msgSend->GetID();
         cout << ")" << endl;
 
@@ -581,6 +599,41 @@ void Tasks::MoveTask(void *arg) {
             rt_mutex_release(&mutex_robot);
         }
         cout << endl << flush;
+    }
+}
+
+
+void Task::WatchDog(){
+    
+    cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
+    // Synchronization barrier (waiting that all tasks are starting)
+    rt_sem_p(&sem_barrier, TM_INFINITE);
+    /**************************************************************************************/
+    /* The task WatchDog starts here                                                      */
+    /**************************************************************************************/
+    rt_sem_p(&sem_watchdog,TM_INFINITE);
+    int mod =0;
+    int err =0;
+    if(WD==1){
+        rt_task_set_periodic(NULL, TM_NOW, 200000000);
+        while(1){
+            mod=(mod+1)%%5;
+            Message * msgSend;
+            rt_task_wait_period(NULL);
+            msgSend = robot.Write(robot.Ping());
+            if(msgSend.CompareID(MESSAGE_ANSWER_COM_ERROR)|| msgSend.CompareID(MESSAGE_ANSWER_ROBOT_TIMEOUT)){
+                err=(err+1)%%4;
+            }
+            else{
+                err=(err-1)%%4;
+            }
+            if(err==3){
+                rt_sem_v(&sem_restartServer);
+            }
+            if(mod==0){
+                robot.Write(robot.ReloadWD());
+            }
+        }
     }
 }
 

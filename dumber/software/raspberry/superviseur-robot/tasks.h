@@ -123,6 +123,7 @@ private:
     RT_SEM sem_stopCamera;
     RT_SEM sem_restartServer;
     RT_SEM sem_closeComRobot;
+    RT_SEM sem_watchdog;
 
     /**********************************************************************/
     /* Message queues                                                     */
@@ -163,7 +164,6 @@ private:
      */
     void MoveTask(void *arg);  
     
-    
     /**
      * @brief Checks the battery level
      */
@@ -178,13 +178,20 @@ private:
      * @brief TODO
      */
     void SearchArenaTask();
-
     
     /**
      * @brief TODO
      */
 
     void StopCameraTask() ;
+    
+    /**
+     * @brief TODO
+     */
+    
+    void WatchDog();
+    
+    
 
     /**********************************************************************/
     /* Queue services                                                     */
