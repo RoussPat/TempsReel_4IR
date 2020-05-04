@@ -58,21 +58,6 @@ public:
      */
     void Join();
     
-    /**
-     * @brief Thread starting over server
-     */
-    void RestartServer();    
-    
-    /**
-    * @brief Thread closing camera
-    */
-    void CloseCamera();   
-    
-    /**
-    * @brief Thread closing communication wiht the robot.
-    */
-    void CloseComRobot();
-    
 private:
     /**********************************************************************/
     /* Shared data                                                        */
@@ -182,7 +167,23 @@ private:
     /**
      * @brief TODO
      */
-    void StopCameraTask() ;
+    void StopCameraTask() ;  
+    
+    
+    /**
+     * @brief Thread starting over server
+     */
+    void RestartServerTask();    
+    
+    /**
+    * @brief Thread closing camera
+    */
+    void CloseCamera();   
+    
+    /**
+    * @brief Thread closing communication wiht the robot.
+    */
+    void CloseComRobotTask();
        
     /**********************************************************************/
     /* Queue services                                                     */
