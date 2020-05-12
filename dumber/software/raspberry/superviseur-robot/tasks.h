@@ -153,40 +153,42 @@ private:
     /**
      * @brief Checks the battery level
      */
-    void BatteryLevelTask();
+    void BatteryLevelTask(void * arg);
     
     /**
      * @brief TODO
      */
-    void StartCameraTask();
+    void StartCameraTask(void *arg);
     
     /**
      * @brief TODO
      */
-    void SearchArenaTask();
+    void SearchArenaTask(void *arg);
     
     /**
      * @brief TODO
      */
 
-    void StopCameraTask() ;
+    void StopCameraTask(void *arg);
     
     /**
      * @brief TODO
      */
     
-    void WatchDog();
+    void WatchDog(void *arg);
     
     
     /**
      * @brief Thread starting over server
      */
-    void RestartServerTask();    
+    void RestartServerTask(void *arg);    
     
     /**
     * @brief Thread closing communication wiht the robot.
     */
-    void CloseComRobotTask();
+    void CloseComRobotTask(void * arg);
+    
+    void taskinit();
 
     /**********************************************************************/
     /* Queue services                                                     */

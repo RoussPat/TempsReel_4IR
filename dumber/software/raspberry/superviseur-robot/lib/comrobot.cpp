@@ -132,7 +132,7 @@ int ComRobot::Open(string shost, int nport) {
 
     struct sockaddr_in serv_addr;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("\n Socket creation error \n");
+        cout <<"\n Socket creation error " << endl << flush;
         return -1;
     }
     struct timeval tv;
@@ -144,7 +144,7 @@ int ComRobot::Open(string shost, int nport) {
     serv_addr.sin_port = htons(nport);
 
     if (inet_pton(AF_INET, shost.c_str(), &serv_addr.sin_addr) <= 0) {
-        cout << "Invalid address/ Address not supported" << endl;
+        cout << "Invalid address/ Address not supported" << endl << flush;
         return -1;
     }
 

@@ -21,15 +21,15 @@
 // Déclaration des priorités des taches
 #define PRIORITY_TSERVER 30
 #define PRIORITY_TRESTARTSERVER 31
-#define PRIORITY_TCLOSECOMROBOT 29
+#define PRIORITY_TCLOSECOMROBOT 30
 #define PRIORITY_TOPENCOMROBOT 20
 #define PRIORITY_TMOVE 20
-#define PRIORITY_TSENDTOMON 28
-#define PRIORITY_TRECEIVEFROMMON 25
+#define PRIORITY_TSENDTOMON 30
+#define PRIORITY_TRECEIVEFROMMON 28
 #define PRIORITY_TSTARTROBOT 20
 #define PRIORITY_TCAMERA 21
 #define PRIORITY_TBATTERY 10
-#define PRIORITY_WATCHDOG 27
+#define PRIORITY_WATCHDOG 29
 
 /*
  * Some remarks:
@@ -121,53 +121,11 @@ void Tasks::Init() {
     }
     cout << "Semaphores created successfully" << endl << flush;
 
-    /**************************************************************************************/
-    /* Tasks creation                                                                     */
-    /**************************************************************************************/
-    if (err = rt_task_create(&th_server, "th_server", 0, PRIORITY_TSERVER, 0)) {
-        cerr << "Error task create: " << strerror(-err) << endl << flush;
+     if (err = rt_task_create(&th_restartServer, "th_restartServer", 0, PRIORITY_TRESTARTSERVER, 0)) {
+        cerr << "Error task create: th_restartServer" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    
-    if (err = rt_task_create(&th_restartServer, "th_restartServer", 0, PRIORITY_TRESTARTSERVER, 0)) {
-        cerr << "Error task create: " << strerror(-err) << endl << flush;
-        exit(EXIT_FAILURE);
-    }
-    
-    if (err = rt_task_create(&th_sendToMon, "th_sendToMon", 0, PRIORITY_TSENDTOMON, 0)) {
-        cerr << "Error task create: " << strerror(-err) << endl << flush;
-        exit(EXIT_FAILURE);
-    }
-    if (err = rt_task_create(&th_receiveFromMon, "th_receiveFromMon", 0, PRIORITY_TRECEIVEFROMMON, 0)) {
-        cerr << "Error task create: " << strerror(-err) << endl << flush;
-        exit(EXIT_FAILURE);
-    }
-    if (err = rt_task_create(&th_openComRobot, "th_openComRobot", 0, PRIORITY_TOPENCOMROBOT, 0)) {
-        cerr << "Error task create: " << strerror(-err) << endl << flush;
-        exit(EXIT_FAILURE);
-    }
-    if (err = rt_task_create(&th_startRobot, "th_startRobot", 0, PRIORITY_TSTARTROBOT, 0)) {
-        cerr << "Error task create: " << strerror(-err) << endl << flush;
-        exit(EXIT_FAILURE);
-    }
-    if (err = rt_task_create(&th_move, "th_move", 0, PRIORITY_TMOVE, 0)) {
-        cerr << "Error task create: " << strerror(-err) << endl << flush;
-        exit(EXIT_FAILURE);
-    }    
-    if (err = rt_task_create(&th_battery, "th_battery", 0, PRIORITY_TBATTERY, 0)) {
-        cerr << "Error task create: " << strerror(-err) << endl << flush;
-        exit(EXIT_FAILURE);
-    }
-    if (err = rt_task_create(&th_closeComRobot, "th_closeComRobot", 0, PRIORITY_TCLOSECOMROBOT, 0)) {
-        cerr << "Error task create: " << strerror(-err) << endl << flush;
-        exit(EXIT_FAILURE);
-    }
-    if (err = rt_task_create(&th_watchdog, "th_closeComRobot", 0, PRIORITY_WATCHDOG, 0)) {
-        cerr << "Error task create: " << strerror(-err) << endl << flush;
-        exit(EXIT_FAILURE);
-    }
-    
-    cout << "Tasks created successfully" << endl << flush;
+    taskinit();
 
     /**************************************************************************************/
     /* Message queues creation                                                            */
@@ -179,7 +137,52 @@ void Tasks::Init() {
     cout << "Queues created successfully" << endl << flush;
 
 }
-
+void Tasks::taskinit(){
+    int err=0;
+    /**************************************************************************************/
+    /* Tasks creation                                                                     */
+    /**************************************************************************************/
+    if (err = rt_task_create(&th_server, "th_server", 0, PRIORITY_TSERVER, 0)) {
+        cerr << "Error task create: th_server" << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    
+    
+    if (err = rt_task_create(&th_sendToMon, "th_sendToMon", 0, PRIORITY_TSENDTOMON, 0)) {
+        cerr << "Error task create: th_sendToMon" << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_create(&th_receiveFromMon, "th_receiveFromMon", 0, PRIORITY_TRECEIVEFROMMON, 0)) {
+        cerr << "Error task create: th_receiveFromMon" << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_create(&th_openComRobot, "th_openComRobot", 0, PRIORITY_TOPENCOMROBOT, 0)) {
+        cerr << "Error task create: th_openComRobot" << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_create(&th_startRobot, "th_startRobot", 0, PRIORITY_TSTARTROBOT, 0)) {
+        cerr << "Error task create: th_startRobot" << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_create(&th_move, "th_move", 0, PRIORITY_TMOVE, 0)) {
+        cerr << "Error task create: th_move" << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }    
+    if (err = rt_task_create(&th_battery, "th_battery", 0, PRIORITY_TBATTERY, 0)) {
+        cerr << "Error task create: th_battery" << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_create(&th_closeComRobot, "th_closeComRobot", 0, PRIORITY_TCLOSECOMROBOT, 0)) {
+        cerr << "Error task create: th_closeComRobot" << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_create(&th_watchdog, "th_watchdog", 0, PRIORITY_WATCHDOG, 0)) {
+        cerr << "Error task create: th_watchdog" << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    
+    cout << "Tasks created successfully" << endl << flush;
+}
 /**
  * @brief Démarrage des tâches
  */
@@ -188,39 +191,39 @@ void Tasks::Run() {
     int err;
 
     if (err = rt_task_start(&th_server, (void(*)(void*)) & Tasks::ServerTask, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_server" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }    
     if (err = rt_task_start(&th_restartServer, (void(*)(void*)) & Tasks::RestartServerTask, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_restartServer" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
     if (err = rt_task_start(&th_sendToMon, (void(*)(void*)) & Tasks::SendToMonTask, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_sendToMon" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
     if (err = rt_task_start(&th_receiveFromMon, (void(*)(void*)) & Tasks::ReceiveFromMonTask, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_receiveFromMon" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
     if (err = rt_task_start(&th_openComRobot, (void(*)(void*)) & Tasks::OpenComRobot, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_openComRobot" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
     if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobotTask, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_closeComRobot" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
     if (err = rt_task_start(&th_startRobot, (void(*)(void*)) & Tasks::StartRobotTask, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_startRobot" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
     if (err = rt_task_start(&th_move, (void(*)(void*)) & Tasks::MoveTask, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_move" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
     if (err = rt_task_start(&th_battery, (void(*)(void*)) & Tasks::BatteryLevelTask, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_battery" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }/*
     if (err = rt_task_start(&th_startCamera, (void(*)(void*)) & Tasks::StartCameraTask, this)) {
@@ -236,22 +239,39 @@ void Tasks::Run() {
         exit(EXIT_FAILURE);
     }    */
     if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobotTask, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_closeComRobot" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
     if (err = rt_task_start(&th_watchdog, (void(*)(void*)) & Tasks::WatchDog, this)) {
-        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        cerr << "Error task start: th_watchdog" << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
     
     cout << "Tasks launched" << endl << flush;
 }
+/**
+ * @brief Arrêt des tâches
+ */
+void Tasks::Stop() {
+    monitor.Close();
+    robot.Close();
+}
+
+/**
+ */
+void Tasks::BR() {
+    cout << "Tasks synchronized" << endl << flush;
+    rt_sem_broadcast(&sem_barrier);
+    pause();
+}
 /** @brief
  * TODO
  */
-void Tasks::StopCameraTask(){
+void Tasks::StopCameraTask(void* arg){
+    cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier,TM_INFINITE);
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     // lunch only when needed in receiveFromMon
     rt_sem_p(&sem_stopCamera,TM_INFINITE);
     //TODO MESSAGE_CAM_IMAGE
@@ -259,9 +279,11 @@ void Tasks::StopCameraTask(){
 /** @brief
  * TODO
  */
-void Tasks::SearchArenaTask(){
+void Tasks::SearchArenaTask(void *arg){
+    cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier,TM_INFINITE);
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     // lunch only when needed in receiveFromMon
     rt_sem_p(&sem_searchArena,TM_INFINITE);
     //TODO MESSAGE_CAM_IMAGE
@@ -270,9 +292,11 @@ void Tasks::SearchArenaTask(){
 /** @brief
  * TODO
  */
-void Tasks::StartCameraTask(){
-    // Synchronization barrier (waiting that all tasks are starting)
+void Tasks::StartCameraTask(void *arg){
+    cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
+    // Synchronization barrier (waiting t1hat all tasks are starting)
     rt_sem_p(&sem_barrier,TM_INFINITE);
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     // lunch only when needed in receiveFromMon
     rt_sem_p(&sem_startCamera,TM_INFINITE);
     //TODO
@@ -280,10 +304,12 @@ void Tasks::StartCameraTask(){
 /** @brief 
  * Gestion affichage du niveau de batterie (envoi au moniteur)
  */
-void Tasks::BatteryLevelTask(){
+void Tasks::BatteryLevelTask(void * arg){
+    cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     int err, rs; 
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     rt_task_set_periodic(NULL, TM_NOW, 500000000);
     
     while (1) {
@@ -317,32 +343,19 @@ void Tasks::BatteryLevelTask(){
     }
 }
 
-/**
- * @brief Arrêt des tâches
- */
-void Tasks::Stop() {
-    monitor.Close();
-    robot.Close();
-}
-
-/**
- */
-void Tasks::BR() {
-    cout << "Tasks synchronized" << endl << flush;
-    rt_sem_broadcast(&sem_barrier);
-    pause();
-}
 
 /**
  * @brief Thread starting over server when there is an issue.
  */
-void Tasks::RestartServerTask() {
+void Tasks::RestartServerTask(void *arg) {
+    cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     int err;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);    
-    
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     while(1){
         rt_sem_p(&sem_restartServer, TM_INFINITE);
+        cout << "[RestartServerTask][!]SERVER RESTARTING !!!!!!!" << endl << flush;
         //Arret de la camera
         rt_sem_v(&sem_stopCamera);
         //Fermeture de la communication avec le robot
@@ -352,77 +365,35 @@ void Tasks::RestartServerTask() {
         monitor.Close();
         rt_mutex_release(&mutex_monitor);
         rt_task_delete(&th_sendToMon);
-        //SendToMonTask.Stop();
         rt_task_delete(&th_receiveFromMon);
-        //ReceiveFromMonTask.Stop();
         rt_task_delete(&th_move);
-        //MoveTask.Stop();
         rt_task_delete(&th_watchdog);
-        //WatchDog.Stop();
         rt_task_delete(&th_battery);
-        //BatteryLevelTask.Stop();
+        rt_task_delete(&th_server);
+        rt_task_delete(&th_openComRobot);
+        rt_task_delete(&th_startRobot);
         rt_task_join(&th_closeComRobot);
-        rt_task_join(&th_stopCamera);
+       
+        //rt_task_join(&th_stopCamera);
         
-        cout << "Monitor closed" << endl << flush;
-        cout << "Server restarts" << endl << flush;
-            rt_task_set_priority(NULL, T_LOPRIO);
-        int err;
-
-        if (err = rt_task_start(&th_server, (void(*)(void*)) & Tasks::ServerTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }    
-        if (err = rt_task_start(&th_sendToMon, (void(*)(void*)) & Tasks::SendToMonTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }
-        if (err = rt_task_start(&th_receiveFromMon, (void(*)(void*)) & Tasks::ReceiveFromMonTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }
-        if (err = rt_task_start(&th_openComRobot, (void(*)(void*)) & Tasks::OpenComRobot, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }
-        if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobotTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }
-        if (err = rt_task_start(&th_startRobot, (void(*)(void*)) & Tasks::StartRobotTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }
-        if (err = rt_task_start(&th_move, (void(*)(void*)) & Tasks::MoveTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }
-        if (err = rt_task_start(&th_battery, (void(*)(void*)) & Tasks::BatteryLevelTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }/*
-        if (err = rt_task_start(&th_startCamera, (void(*)(void*)) & Tasks::StartCameraTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }
-        if (err = rt_task_start(&th_searchArena, (void(*)(void*)) & Tasks::SearchArenaTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }
-        if (err = rt_task_start(&th_stopCamera, (void(*)(void*)) & Tasks::StopCameraTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }    */
-        if (err = rt_task_start(&th_closeComRobot, (void(*)(void*)) & Tasks::CloseComRobotTask, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }
-        if (err = rt_task_start(&th_watchdog, (void(*)(void*)) & Tasks::WatchDog, this)) {
-            cerr << "Error task start: " << strerror(-err) << endl << flush;
-            exit(EXIT_FAILURE);
-        }
-
-        cout << "Tasks Relaunched" << endl << flush;
+        cout << "[RestartServerTask]Monitor closed" << endl << flush;
+        robotStarted = 0;
+        move = MESSAGE_ROBOT_STOP;
+        WD =-1;
+        position=0;
+        arenaOK=-1;
+        cout << "[RestartServerTask]Server restarts" << endl << flush;
+        taskinit();
+        Run();/*
+        rt_sem_v(&sem_barrier);
+        rt_sem_v(&sem_barrier);
+        rt_sem_v(&sem_barrier);
+        rt_sem_v(&sem_barrier);
+        rt_sem_v(&sem_barrier);
+        rt_sem_p(&sem_serverOk,TM_INFINITE);*/
+        cout << "Tasks synchronized" << endl << flush;
+        rt_sem_broadcast(&sem_barrier);
+        cout << "[RestartServerTask]Tasks Relaunched going to sleep" << endl << flush;
     }
 }
         
@@ -430,9 +401,11 @@ void Tasks::RestartServerTask() {
 /**
  * @brief Thread closing communication wiht the robot.
  */
-void Tasks::CloseComRobotTask() {
+void Tasks::CloseComRobotTask(void * arg) {
+    cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);  
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     Message * toSend = new Message(MESSAGE_ROBOT_COM_CLOSE);
             
     rt_sem_p(&sem_closeComRobot, TM_INFINITE);
@@ -442,7 +415,7 @@ void Tasks::CloseComRobotTask() {
     rt_mutex_release(&mutex_robotStarted);
     //Envoi d'un message au moniteur
     rt_mutex_acquire(&mutex_robot, TM_INFINITE); //mutex du robot?
-    WriteInQueue(&q_messageToMon, toSend); // msgSend will be deleted by sendToMon
+    //WriteInQueue(&q_messageToMon, toSend); // msgSend will be deleted by sendToMon
     robot.Close();
     rt_mutex_release(&mutex_robot);
 
@@ -459,7 +432,7 @@ void Tasks::ServerTask(void *arg) {
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are started)
     rt_sem_p(&sem_barrier, TM_INFINITE);
-
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     /**************************************************************************************/
     /* The task server starts here                                                        */
     /**************************************************************************************/
@@ -486,7 +459,7 @@ void Tasks::SendToMonTask(void* arg) {
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
-
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     /**************************************************************************************/
     /* The task sendToMon starts here                                                     */
     /**************************************************************************************/
@@ -510,7 +483,7 @@ void Tasks::ReceiveFromMonTask(void *arg) {
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
-    
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     /**************************************************************************************/
     /* The task receiveFromMon starts here                                                */
     /**************************************************************************************/
@@ -523,7 +496,7 @@ void Tasks::ReceiveFromMonTask(void *arg) {
 
         if (msgRcv->CompareID(MESSAGE_MONITOR_LOST)) {
             delete(msgRcv);
-            RestartServerTask();
+            rt_sem_v(&sem_restartServer);
             exit(-1);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_COM_OPEN)) {
             rt_sem_v(&sem_openComRobot);
@@ -533,6 +506,7 @@ void Tasks::ReceiveFromMonTask(void *arg) {
         } else if(msgRcv->CompareID(MESSAGE_ROBOT_START_WITH_WD)){
             WD =1;
             rt_sem_v(&sem_startRobot);
+            rt_sem_v(&sem_watchdog);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_GO_FORWARD) ||
                 msgRcv->CompareID(MESSAGE_ROBOT_GO_BACKWARD) ||
                 msgRcv->CompareID(MESSAGE_ROBOT_GO_LEFT) ||
@@ -573,7 +547,7 @@ void Tasks::OpenComRobot(void *arg) {
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
-    
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     /**************************************************************************************/
     /* The task openComRobot starts here                                                  */
     /**************************************************************************************/
@@ -603,7 +577,7 @@ void Tasks::StartRobotTask(void *arg) {
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
-    
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     /**************************************************************************************/
     /* The task startRobot starts here                                                    */
     /**************************************************************************************/
@@ -645,6 +619,7 @@ void Tasks::MoveTask(void *arg) {
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     
     /**************************************************************************************/
     /* The task starts here                                                               */
@@ -673,11 +648,11 @@ void Tasks::MoveTask(void *arg) {
 }
 
 
-void Tasks::WatchDog(){
-    
+void Tasks::WatchDog(void *arg){
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
+    cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
     /**************************************************************************************/
     /* The task WatchDog starts here                                                      */
     /**************************************************************************************/
@@ -693,11 +668,17 @@ void Tasks::WatchDog(){
             msgSend = robot.Write(robot.Ping());
             if(msgSend->CompareID(MESSAGE_ANSWER_COM_ERROR)|| msgSend->CompareID(MESSAGE_ANSWER_ROBOT_TIMEOUT)){
                 err=(err+1)%4;
+                cout << "[watchdog] err = " << err << endl << flush;
             }
             else{
-                err=(err-1)%4;
+                err=(err-1);
+                if(err == -1){
+                    err =0;
+                }
+                cout << "[watchdog] err = " << err << endl << flush;
             }
             if(err==3){
+                cout << "watchdog restart the server" << endl << flush;
                 rt_sem_v(&sem_restartServer);
             }
             if(mod==0){
