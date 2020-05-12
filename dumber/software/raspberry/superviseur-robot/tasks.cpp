@@ -362,6 +362,7 @@ void Tasks::RestartServerTask(void *arg) {
         rt_sem_v(&sem_closeComRobot);
         //Fermeture du moniteur
         rt_mutex_acquire(&mutex_monitor, TM_INFINITE);
+        //monitor.Write(); 
         monitor.Close();
         rt_mutex_release(&mutex_monitor);
         rt_task_delete(&th_sendToMon);
@@ -384,7 +385,9 @@ void Tasks::RestartServerTask(void *arg) {
         arenaOK=-1;
         cout << "[RestartServerTask]Server restarts" << endl << flush;
         taskinit();
-        Run();/*
+        Run();
+        sleep(1);
+        /*
         rt_sem_v(&sem_barrier);
         rt_sem_v(&sem_barrier);
         rt_sem_v(&sem_barrier);
@@ -497,7 +500,7 @@ void Tasks::ReceiveFromMonTask(void *arg) {
         if (msgRcv->CompareID(MESSAGE_MONITOR_LOST)) {
             delete(msgRcv);
             rt_sem_v(&sem_restartServer);
-            exit(-1);
+            //exit(-1);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_COM_OPEN)) {
             rt_sem_v(&sem_openComRobot);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_START_WITHOUT_WD)) {
