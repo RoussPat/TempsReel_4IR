@@ -19,17 +19,17 @@
 #include <stdexcept>
 
 // Déclaration des priorités des taches
-#define PRIORITY_TSERVER 30
+#define PRIORITY_TSERVER 28
 #define PRIORITY_TRESTARTSERVER 31
-#define PRIORITY_TCLOSECOMROBOT 30
+#define PRIORITY_TCLOSECOMROBOT 29
 #define PRIORITY_TOPENCOMROBOT 20
 #define PRIORITY_TMOVE 20
 #define PRIORITY_TSENDTOMON 30
-#define PRIORITY_TRECEIVEFROMMON 28
+#define PRIORITY_TRECEIVEFROMMON 27
 #define PRIORITY_TSTARTROBOT 20
 #define PRIORITY_TCAMERA 21
 #define PRIORITY_TBATTERY 10
-#define PRIORITY_WATCHDOG 29
+#define PRIORITY_WATCHDOG 26
 
 /*
  * Some remarks:
@@ -275,6 +275,7 @@ void Tasks::StopCameraTask(void* arg){
     // lunch only when needed in receiveFromMon
     rt_sem_p(&sem_stopCamera,TM_INFINITE);
     //TODO MESSAGE_CAM_IMAGE
+    cout << "CAMERA STOPED" << endl << flush;
 }
 /** @brief
  * TODO
@@ -358,12 +359,17 @@ void Tasks::RestartServerTask(void *arg) {
         cout << "[RestartServerTask][!]SERVER RESTARTING !!!!!!!" << endl << flush;
         //Arret de la camera
         rt_sem_v(&sem_stopCamera);
+        
+        //sleep(1);
         //Fermeture de la communication avec le robot
         rt_sem_v(&sem_closeComRobot);
+        //sleep(1);
         //Fermeture du moniteur
         rt_mutex_acquire(&mutex_monitor, TM_INFINITE);
+        //sleep(1);
         //monitor.Write(); 
         monitor.Close();
+        //sleep(1);
         rt_mutex_release(&mutex_monitor);
         rt_task_delete(&th_sendToMon);
         rt_task_delete(&th_receiveFromMon);
@@ -375,10 +381,11 @@ void Tasks::RestartServerTask(void *arg) {
         rt_task_delete(&th_startRobot);
         rt_task_join(&th_closeComRobot);
        
+        sleep(1);
         //rt_task_join(&th_stopCamera);
         
         cout << "[RestartServerTask]Monitor closed" << endl << flush;
-        robotStarted = 0;
+        //robotStarted = 0;
         move = MESSAGE_ROBOT_STOP;
         WD =-1;
         position=0;
@@ -409,7 +416,7 @@ void Tasks::CloseComRobotTask(void * arg) {
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);  
     cout << "Launch " << __PRETTY_FUNCTION__ << endl << flush;
-    Message * toSend = new Message(MESSAGE_ROBOT_COM_CLOSE);
+    //Message * toSend = new Message(MESSAGE_ROBOT_COM_CLOSE);
             
     rt_sem_p(&sem_closeComRobot, TM_INFINITE);
     //Arret du robot
@@ -450,6 +457,7 @@ void Tasks::ServerTask(void *arg) {
     };
     monitor.AcceptClient(); // Wait the monitor client
     cout << "Rock'n'Roll baby, client accepted!" << endl << flush;
+    //pause();
     rt_sem_broadcast(&sem_serverOk);
 }
 
@@ -500,7 +508,7 @@ void Tasks::ReceiveFromMonTask(void *arg) {
         if (msgRcv->CompareID(MESSAGE_MONITOR_LOST)) {
             delete(msgRcv);
             rt_sem_v(&sem_restartServer);
-            //exit(-1);
+            return;
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_COM_OPEN)) {
             rt_sem_v(&sem_openComRobot);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_START_WITHOUT_WD)) {
@@ -683,6 +691,7 @@ void Tasks::WatchDog(void *arg){
             if(err==3){
                 cout << "watchdog restart the server" << endl << flush;
                 rt_sem_v(&sem_restartServer);
+                return;
             }
             if(mod==0){
                 robot.Write(robot.ReloadWD());
