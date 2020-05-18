@@ -23,7 +23,7 @@
 #define PRIORITY_TRESTARTSERVER 31
 #define PRIORITY_TCLOSECOMROBOT 29
 #define PRIORITY_TOPENCOMROBOT 20
-#define PRIORITY_TMOVE 20
+#define PRIORITY_TMOVE 24
 #define PRIORITY_TSENDTOMON 30
 #define PRIORITY_TRECEIVEFROMMON 27
 #define PRIORITY_TSTARTROBOT 20
@@ -337,7 +337,8 @@ void Tasks::BatteryLevelTask(void * arg){
             }
             cout << "Message reçu : " << mReceived->ToString() << endl << flush;
             
-            monitor.Write(mReceived);
+            WriteInQueue(&q_messageToMon,mReceived);
+            //monitor.Write(mReceived);
             //delete(mSent);
             //delete(mReceived);
         }       
@@ -517,7 +518,6 @@ void Tasks::ReceiveFromMonTask(void *arg) {
         } else if(msgRcv->CompareID(MESSAGE_ROBOT_START_WITH_WD)){
             WD =1;
             rt_sem_v(&sem_startRobot);
-            rt_sem_v(&sem_watchdog);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_GO_FORWARD) ||
                 msgRcv->CompareID(MESSAGE_ROBOT_GO_BACKWARD) ||
                 msgRcv->CompareID(MESSAGE_ROBOT_GO_LEFT) ||
@@ -595,15 +595,17 @@ void Tasks::StartRobotTask(void *arg) {
     while (1) {
         Message * msgSend;
         rt_sem_p(&sem_startRobot, TM_INFINITE);
-        cout << "Start robot without watchdog (";
+        
         rt_mutex_acquire(&mutex_robot, TM_INFINITE);
-        if(WD=1){
+        if(WD==1){
             msgSend = robot.Write(robot.StartWithWD());
+            cout << "Start robot with watchdog (";
             rt_mutex_release(&mutex_robot);
             rt_sem_v(&sem_watchdog);
         }
         else{
             msgSend = robot.Write(robot.StartWithoutWD());
+            cout << "Start robot without watchdog (";
             rt_mutex_release(&mutex_robot);
         }
         cout << msgSend->GetID();
